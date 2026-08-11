@@ -1,0 +1,545 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Valoración de IP · Panel de progreso — Geca</title>
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<style>
+:root{
+  --ink:#0F2E38; --pet:#14545F; --pet2:#1B7080; --pet3:#2A8FA0;
+  --pale:#E4F0F2; --line:rgba(20,84,95,0.20);
+  --acc:#D98324; --acc-lt:#F0B65C;
+  --bg:#F5F3EF; --bg2:#FAF9F6; --white:#FFFFFF;
+  --border:rgba(0,0,0,0.08);
+  --txt:#111111; --txt2:#4A4A4A; --txt3:#7A7A7A;
+  --op:#15652F;  --op-bg:#DAF5E4;
+  --acce:#14545F; --acce-bg:#E4F0F2;
+  --perm:#8A5A0B; --perm-bg:#FCEFD8;
+  --pago:#5B3E7A; --pago-bg:#EEE8F7;
+  --no:#8A2B20;   --no-bg:#FAE7E4;
+  --nav-w:252px; --r:12px; --rl:18px;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{font-family:'Sora',sans-serif;background:var(--bg);color:var(--txt);display:flex;min-height:100vh}
+
+nav{position:fixed;top:0;left:0;width:var(--nav-w);height:100vh;background:var(--ink);display:flex;flex-direction:column;z-index:200;overflow:hidden}
+nav::before{content:'';position:absolute;top:-80px;left:-50px;width:260px;height:260px;border-radius:50%;background:radial-gradient(circle,rgba(255,255,255,.06) 0%,transparent 70%);pointer-events:none}
+.ntop{padding:34px 26px 22px;border-bottom:1px solid rgba(255,255,255,.12);position:relative}
+.nbrand{font-size:10px;font-weight:600;letter-spacing:4px;text-transform:uppercase;color:rgba(255,255,255,.55);margin-bottom:5px}
+.ntitle{font-size:21px;font-weight:800;color:#fff;letter-spacing:-.5px;line-height:1.15}
+.nperiod{margin-top:8px;font-size:11.5px;color:rgba(255,255,255,.8);font-weight:500}
+nav ul{list-style:none;padding:14px 0;flex:1;overflow-y:auto}
+nav ul::-webkit-scrollbar{width:0}
+nav ul li a{display:flex;align-items:center;gap:12px;padding:10px 26px;color:rgba(255,255,255,.65);text-decoration:none;font-size:12.5px;font-weight:500;transition:all .18s;border-left:2px solid transparent}
+nav ul li a:hover{color:#fff;background:rgba(255,255,255,.07)}
+nav ul li a.active{color:#fff;background:rgba(255,255,255,.1);border-left-color:var(--acc)}
+.nnum{font-size:10px;color:var(--acc-lt);opacity:.8;width:22px;flex-shrink:0;font-weight:700}
+.nfoot{padding:18px 26px;border-top:1px solid rgba(255,255,255,.07);font-size:10px;color:rgba(255,255,255,.5);font-weight:500;letter-spacing:.5px}
+main{margin-left:var(--nav-w);flex:1;min-width:0}
+
+/* ── COVER ─────────────────────────────────────────────── */
+.cover{background:linear-gradient(140deg,var(--ink) 0%,var(--pet) 55%,var(--pet2) 100%);padding:56px 68px 44px;position:relative;overflow:hidden}
+.cover-grid{position:absolute;inset:0;background-image:linear-gradient(rgba(255,255,255,.03) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.03) 1px,transparent 1px);background-size:56px 56px;pointer-events:none}
+.cover-orb{position:absolute;border-radius:50%;pointer-events:none}
+.c1{width:440px;height:440px;top:-170px;right:-60px;background:radial-gradient(circle,rgba(255,255,255,.05) 0%,transparent 65%)}
+.c2{width:250px;height:250px;bottom:-90px;left:210px;background:radial-gradient(circle,rgba(217,131,36,.12) 0%,transparent 70%)}
+.cover-ey{font-size:11px;font-weight:600;letter-spacing:4px;text-transform:uppercase;color:rgba(255,255,255,.6);margin-bottom:12px;opacity:0;transform:translateY(12px);animation:fu .7s .1s ease forwards}
+.cover-title{font-size:56px;font-weight:800;color:#fff;line-height:1;letter-spacing:-1.6px;margin-bottom:22px;opacity:0;transform:translateY(16px);animation:fu .8s .25s ease forwards}
+.cover-title span{display:block;font-size:26px;font-weight:300;color:rgba(255,255,255,.75);letter-spacing:0;line-height:1.35;margin-top:8px}
+.cband{display:grid;grid-template-columns:repeat(4,1fr);border-top:1px solid rgba(255,255,255,.18);padding-top:24px;opacity:0;transform:translateY(12px);animation:fu .7s .45s ease forwards}
+.cb{padding-right:22px;border-right:1px solid rgba(255,255,255,.14)}
+.cb:last-child{border-right:none}
+.cbn{font-size:38px;font-weight:800;color:#fff;line-height:1;letter-spacing:-1px}
+.cbl{font-size:10px;font-weight:600;color:rgba(255,255,255,.65);letter-spacing:1px;margin-top:7px;text-transform:uppercase;line-height:1.5}
+
+@keyframes fu{to{opacity:1;transform:translateY(0)}}
+.reveal{opacity:0;transform:translateY(24px);transition:opacity .55s cubic-bezier(.22,1,.36,1),transform .55s cubic-bezier(.22,1,.36,1)}
+.reveal.vis{opacity:1;transform:translateY(0)}
+.d1{transition-delay:.07s}.d2{transition-delay:.14s}.d3{transition-delay:.21s}.d4{transition-delay:.28s}.d5{transition-delay:.35s}
+
+section{padding:56px 68px;border-bottom:1px solid #E9E5DC}
+section:nth-child(even){background:var(--bg2)}
+section:nth-child(odd){background:var(--bg)}
+.sey{font-size:10px;font-weight:700;letter-spacing:4px;text-transform:uppercase;color:var(--txt);margin-bottom:8px;display:flex;align-items:center;gap:10px}
+.sey::before{content:'';display:inline-block;width:18px;height:2px;background:var(--acc)}
+.stitle{font-size:34px;font-weight:800;line-height:1.05;margin-bottom:12px;letter-spacing:-.6px}
+.slead{font-size:14.5px;line-height:1.7;color:var(--txt2);max-width:840px;margin-bottom:28px}
+.sdiv{font-size:10px;font-weight:700;letter-spacing:3px;text-transform:uppercase;margin:36px 0 16px;display:flex;align-items:center;gap:14px}
+.sdiv::after{content:'';flex:1;height:1px;background:linear-gradient(to right,rgba(0,0,0,.12),transparent)}
+
+.mband{background:linear-gradient(135deg,var(--ink) 0%,var(--pet) 60%,var(--pet2) 100%);border-radius:var(--rl);display:grid;grid-template-columns:repeat(4,1fr);margin-bottom:26px;position:relative;overflow:hidden}
+.mband::before{content:'';position:absolute;inset:0;background-image:linear-gradient(rgba(255,255,255,.04) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.04) 1px,transparent 1px);background-size:44px 44px;pointer-events:none}
+.mi{padding:28px 26px;border-right:1px solid rgba(255,255,255,.1);position:relative}
+.mi:last-child{border-right:none}
+.mnum{font-size:38px;font-weight:800;color:#fff;line-height:1;letter-spacing:-1px}
+.mlbl{font-size:10px;font-weight:600;color:rgba(255,255,255,.65);letter-spacing:1px;margin-top:7px;text-transform:uppercase;line-height:1.5}
+
+.card{background:var(--white);border:1px solid var(--border);border-radius:var(--r);padding:24px 26px;box-shadow:0 1px 4px rgba(0,0,0,.04),0 6px 20px rgba(0,0,0,.05)}
+.clbl{font-size:10px;font-weight:700;letter-spacing:3px;text-transform:uppercase;margin-bottom:16px;display:flex;align-items:center;gap:8px}
+.clbl::before{content:'';width:12px;height:2px;background:var(--acc);flex-shrink:0}
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:20px}
+.g3{display:grid;grid-template-columns:repeat(3,1fr);gap:20px}
+.g21{display:grid;grid-template-columns:1.3fr 1fr;gap:20px}
+.g12{display:grid;grid-template-columns:1fr 1.3fr;gap:20px}
+
+/* ── FASE STRIP ────────────────────────────────────────── */
+.fstrip{display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:var(--border);border:1px solid var(--border);border-radius:var(--r);overflow:hidden;margin-bottom:26px}
+.fs{background:var(--white);padding:16px 20px}
+.fs b{display:block;font-size:9.5px;font-weight:800;letter-spacing:2.2px;text-transform:uppercase;color:var(--pet2);margin-bottom:5px}
+.fs span{font-size:13.5px;font-weight:600;color:var(--txt);line-height:1.45}
+.fs i{display:block;font-style:normal;font-size:12px;color:var(--txt3);margin-top:5px;line-height:1.5}
+
+/* ── CHIPS ─────────────────────────────────────────────── */
+.chip{display:inline-flex;align-items:center;gap:7px;font-size:11px;font-weight:700;padding:6px 13px;border-radius:20px;letter-spacing:.3px;white-space:nowrap;border:1px solid transparent}
+.chip i{width:8px;height:8px;border-radius:50%;flex-shrink:0;font-style:normal}
+.c-done{background:var(--op-bg);color:var(--op);border-color:rgba(21,101,47,.2)} .c-done i{background:var(--op)}
+.c-curso{background:var(--perm-bg);color:var(--perm);border-color:rgba(138,90,11,.22)} .c-curso i{background:var(--acc)}
+.c-pend{background:#EFEDE7;color:var(--txt3);border-color:rgba(0,0,0,.08)} .c-pend i{background:#BFBBB2}
+
+.ctable{background:var(--white);border:1px solid var(--border);border-radius:var(--rl);overflow:hidden;box-shadow:0 1px 4px rgba(0,0,0,.04),0 8px 26px rgba(0,0,0,.05)}
+.chead,.crow{display:grid;grid-template-columns:52px 1.5fr 1fr 1fr 1fr 128px;align-items:center;gap:14px;padding:14px 24px}
+.chead{background:var(--ink)}
+.chead div{font-size:9.5px;font-weight:700;letter-spacing:2.2px;text-transform:uppercase;color:rgba(255,255,255,.72)}
+.crow{border-top:1px solid var(--border);transition:background .15s}
+.crow:hover{background:#F3F8F9}
+.crow.next{background:linear-gradient(to right,#FFF9EF,transparent)}
+.cprio{font-size:12px;font-weight:800;color:var(--acc);letter-spacing:.5px}
+.cname{font-size:15.5px;font-weight:700;letter-spacing:-.2px}
+.cname small{display:block;font-size:11.5px;font-weight:500;color:var(--txt3);letter-spacing:0;margin-top:3px}
+.cbar{height:7px;border-radius:6px;background:#E7E3DA;overflow:hidden}
+.cbar span{display:block;height:100%;border-radius:6px;background:linear-gradient(90deg,var(--pet2),var(--pet3))}
+.cpct{font-size:11px;font-weight:700;color:var(--txt2);margin-top:6px;letter-spacing:.3px}
+
+.bk{display:flex;gap:14px;align-items:flex-start;padding:15px 18px;border-radius:var(--r);border:1px solid transparent}
+.bk-n{font-size:25px;font-weight:800;line-height:1;letter-spacing:-1px;min-width:50px}
+.bk-t{font-size:13.5px;font-weight:700;margin-bottom:4px;line-height:1.3}
+.bk-b{font-size:12.5px;line-height:1.6;opacity:.9}
+.k-op{background:var(--op-bg);border-color:rgba(21,101,47,.2);color:var(--op)}
+.k-acc{background:var(--acce-bg);border-color:var(--line);color:var(--acce)}
+.k-perm{background:var(--perm-bg);border-color:rgba(138,90,11,.22);color:var(--perm)}
+.k-pago{background:var(--pago-bg);border-color:rgba(91,62,122,.2);color:var(--pago)}
+.k-no{background:var(--no-bg);border-color:rgba(138,43,32,.2);color:var(--no)}
+.bkcol{display:flex;flex-direction:column;gap:11px}
+
+.hl{border-left:3px solid var(--acc);background:linear-gradient(to right,#FFFBF3,transparent);border-radius:0 8px 8px 0;padding:15px 18px;font-size:13.5px;line-height:1.7}
+.hl strong{display:block;font-size:10px;font-weight:700;letter-spacing:2.5px;text-transform:uppercase;margin-bottom:6px}
+.ins{background:linear-gradient(135deg,var(--ink),var(--pet));border-radius:var(--r);padding:26px 30px;position:relative;overflow:hidden}
+.ins .ey{font-size:10px;font-weight:700;letter-spacing:3px;text-transform:uppercase;color:rgba(255,255,255,.6);margin-bottom:10px}
+.ins p{font-size:13.5px;line-height:1.8;color:#fff}
+.ins p+p{margin-top:11px}
+
+.etbl{width:100%;border-collapse:collapse;font-size:13px}
+.etbl thead tr{border-bottom:2px solid var(--ink)}
+.etbl thead th{padding:10px 12px;text-align:left;font-size:9.5px;font-weight:700;letter-spacing:2.2px;text-transform:uppercase}
+.etbl tbody tr{border-bottom:1px solid var(--border)}
+.etbl tbody tr:hover{background:#F3F8F9}
+.etbl tbody td{padding:11px 12px;color:var(--txt2);vertical-align:top;line-height:1.55}
+.etbl tbody td:first-child{font-weight:700;color:var(--txt)}
+.tag{display:inline-block;font-size:10px;font-weight:700;padding:3px 9px;border-radius:14px;letter-spacing:.4px;white-space:nowrap}
+.t-pago{background:var(--pago-bg);color:var(--pago)}
+.t-perm{background:var(--perm-bg);color:var(--perm)}
+.t-part{background:var(--perm-bg);color:var(--perm)}
+
+.ul{list-style:none;display:flex;flex-direction:column;gap:11px;font-size:13.5px;line-height:1.65;color:var(--txt2)}
+.ul b{color:var(--txt)}
+.step{display:flex;gap:18px;align-items:flex-start;background:var(--white);border:1px solid var(--border);border-radius:var(--r);padding:19px 22px;box-shadow:0 1px 4px rgba(0,0,0,.04)}
+.step-n{width:32px;height:32px;border-radius:50%;background:var(--ink);color:#fff;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:800;flex-shrink:0}
+.step.now{border-color:rgba(217,131,36,.45);background:linear-gradient(to right,#FFFBF3,var(--white))}
+.step.now .step-n{background:var(--acc)}
+.step-t{font-size:15px;font-weight:700;margin-bottom:5px}
+.step-b{font-size:13px;line-height:1.65;color:var(--txt2)}
+.stepcol{display:flex;flex-direction:column;gap:13px}
+
+.gl{border-left:2px solid var(--line);padding:2px 0 2px 18px}
+.gl+.gl{margin-top:18px}
+.gl dt{font-size:14px;font-weight:800;margin-bottom:5px;letter-spacing:-.2px}
+.gl dd{font-size:13.5px;line-height:1.7;color:var(--txt2)}
+.cwrap{position:relative;width:100%}
+footer{background:var(--ink);padding:26px 68px;display:flex;justify-content:space-between;align-items:center;gap:20px;font-size:12px;color:rgba(255,255,255,.75);font-weight:500;flex-wrap:wrap}
+footer strong{color:#fff;font-weight:700}
+
+@media(max-width:980px){
+  nav{display:none}main{margin-left:0}
+  .cover,section,footer{padding-left:24px;padding-right:24px}
+  .cover-title{font-size:38px}.cover-title span{font-size:20px}
+  .stitle{font-size:26px}
+  .g2,.g3,.g21,.g12,.fstrip{grid-template-columns:1fr}
+  .mband,.cband{grid-template-columns:1fr 1fr}
+  .cb{border-right:none;padding:10px 0}
+  .chead{display:none}
+  .crow{grid-template-columns:1fr;gap:10px;padding:20px 22px}
+}
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="ntop">
+    <div class="nbrand">Geca · Panel interno</div>
+    <div class="ntitle">Valoración de IP</div>
+    <div class="nperiod">Actualizado 10 ago 2026</div>
+  </div>
+  <ul>
+    <li><a href="#estado"><span class="nnum">01</span>Estado por campo</a></li>
+    <li><a href="#libros"><span class="nnum">02</span>Libros · fase 2</a></li>
+    <li><a href="#videojuegos"><span class="nnum">03</span>Videojuegos · mapeo</a></li>
+    <li><a href="#cierre"><span class="nnum">04</span>Qué falta por cerrar</a></li>
+    <li><a href="#siguiente"><span class="nnum">05</span>Próximos pasos</a></li>
+    <li><a href="#glosario"><span class="nnum">06</span>Cómo leer los datos</a></li>
+  </ul>
+  <div class="nfoot">Uso interno · Equipo comercial</div>
+</nav>
+
+<main>
+
+<!-- ══ COVER ═══════════════════════════════════════════════ -->
+<div class="cover">
+  <div class="cover-grid"></div><div class="cover-orb c1"></div><div class="cover-orb c2"></div>
+  <div class="cover-ey">Valoración de IP · Panel de progreso</div>
+  <h1 class="cover-title">Dos campos abiertos<span>Libros en validación de fuentes · Videojuegos en mapeo</span></h1>
+  <div class="cband">
+    <div class="cb"><div class="cbn">12</div><div class="cbl">Campos en cartera</div></div>
+    <div class="cb"><div class="cbn">2</div><div class="cbl">Campos en trabajo activo</div></div>
+    <div class="cb"><div class="cbn">283</div><div class="cbl">Data points mapeados hasta hoy</div></div>
+    <div class="cb"><div class="cbn">127</div><div class="cbl">Fuentes identificadas</div></div>
+  </div>
+</div>
+
+<!-- ══ 01 ESTADO ═══════════════════════════════════════════ -->
+<section id="estado">
+  <div class="sey">01 · Estado</div>
+  <h2 class="stitle">Estado por campo</h2>
+
+  <div class="fstrip reveal">
+    <div class="fs"><b>Fase 1 · Mapeo</b><span>Qué se puede medir y quién lo publica</span><i>Cierra con el listado de data points y fuentes.</i></div>
+    <div class="fs"><b>Fase 2 · Viabilidad</b><span>Qué podemos conseguir de verdad</span><i>Cierra con el semáforo por data point y el coste de las fuentes de pago.</i></div>
+    <div class="fs"><b>Fase 3 · Valoración</b><span>Sistema de puntuación del potencial</span><i>No arranca en ningún campo hasta que su fase 2 esté cerrada.</i></div>
+  </div>
+
+  <div class="ctable reveal">
+    <div class="chead">
+      <div>Pri.</div><div>Campo</div><div>Fase 1</div><div>Fase 2</div><div>Fase 3</div><div>Avance</div>
+    </div>
+    <div id="campos"></div>
+  </div>
+
+  <div class="g2" style="margin-top:24px">
+    <div class="card reveal d1">
+      <div class="clbl">Libros · dónde está el trabajo</div>
+      <p style="font-size:13.5px;line-height:1.7;color:var(--txt2)">Fase 2 abierta. El mapa de 192 data points está hecho y clasificado por viabilidad, pero <b style="color:var(--txt)">la lista definitiva de fuentes y data points todavía no está cerrada</b>: quedan por resolver la decisión sobre fuentes de pago, las solicitudes de acceso y la depuración de los data points no válidos.</p>
+    </div>
+    <div class="card reveal d2">
+      <div class="clbl">Videojuegos · dónde está el trabajo</div>
+      <p style="font-size:13.5px;line-height:1.7;color:var(--txt2)">Fase 1 en desarrollo: <b style="color:var(--txt)">91 data points, 45 fuentes y 22 categorías identificados hasta ahora</b>, con el rastreo de fuentes todavía abierto. La columna de validación está vacía en los 91 casos.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ══ 02 LIBROS ═══════════════════════════════════════════ -->
+<section id="libros">
+  <div class="sey">02 · Libros</div>
+  <h2 class="stitle">Libros · validación de fuentes en curso</h2>
+  <p class="slead">Mapa cerrado y primera clasificación de viabilidad hecha sobre los 192 data points. Fecha de cotejo de las fuentes: 7 de agosto de 2026.</p>
+
+  <div class="mband reveal">
+    <div class="mi"><div class="mnum">192</div><div class="mlbl">Data points identificados</div></div>
+    <div class="mi"><div class="mnum">82</div><div class="mlbl">Fuentes de datos</div></div>
+    <div class="mi"><div class="mnum">17</div><div class="mlbl">Categorías</div></div>
+    <div class="mi"><div class="mnum">121</div><div class="mlbl">Sin coste: nuestros o alcanzables</div></div>
+  </div>
+
+  <div class="sdiv">Clasificación de viabilidad · resultado provisional</div>
+  <div class="g21">
+    <div class="bkcol reveal d1">
+      <div class="bk k-op"><div class="bk-n">57</div><div><div class="bk-t">Ya lo estamos recopilando</div><div class="bk-b">Entra solo en el sistema. Sobre todo catálogos e identificadores de bibliotecas nacionales y repositorios abiertos.</div></div></div>
+      <div class="bk k-acc"><div class="bk-n">64</div><div><div class="bk-t">Accesible, falta integrarlo</div><div class="bk-b">Disponible sin pagar: web pública, API abierta o datos abiertos. Es trabajo de desarrollo, no de presupuesto. Buena parte requiere consulta manual.</div></div></div>
+      <div class="bk k-perm"><div class="bk-n">14</div><div><div class="bk-t">Requiere permiso o aprobación</div><div class="bk-b">La fuente existe pero hay que solicitar acceso y ser aceptados. Ninguna solicitud está presentada todavía.</div></div></div>
+      <div class="bk k-pago"><div class="bk-n">43</div><div><div class="bk-t">Requiere inversión</div><div class="bk-b">Suscripción o servicio comercial. Concentrado en datos de venta real y escucha social.</div></div></div>
+      <div class="bk k-no"><div class="bk-n">14</div><div><div class="bk-t">No viable · descartar o sustituir</div><div class="bk-b">La fuente no mide realmente ese dato, es documentación de referencia o es un servicio obsoleto. Pendientes de retirar del mapa.</div></div></div>
+    </div>
+    <div class="card reveal d2">
+      <div class="clbl">Reparto de los 192 data points</div>
+      <div class="cwrap" style="height:296px"><canvas id="dn"></canvas></div>
+      <div class="hl" style="margin-top:18px">
+        <strong>Lo relevante para cerrar la fase</strong>
+        121 de 192 no dependen de presupuesto. Los 71 restantes (pago + permiso) son los que mantienen la lista abierta.
+      </div>
+    </div>
+  </div>
+
+  <div class="sdiv">Dónde está la información · categorías y estado</div>
+  <div class="card reveal">
+    <div class="clbl">Data points por categoría</div>
+    <div class="cwrap" style="height:410px"><canvas id="barsL"></canvas></div>
+  </div>
+
+  <div class="g2" style="margin-top:24px">
+    <div class="card reveal d1">
+      <div class="clbl">Cobertura sólida hoy</div>
+      <ul class="ul">
+        <li><b>Identidad y metadatos de la obra:</b> catálogos nacionales y repositorios abiertos ya integrados.</li>
+        <li><b>Comunidad lectora:</b> valoraciones, reseñas y listas de Goodreads, Open Library y StoryGraph.</li>
+        <li><b>Presencia cultural y traducciones:</b> Wikidata y holdings de bibliotecas.</li>
+        <li><b>Rankings de bestsellers:</b> consulta manual en España, Alemania, Brasil, Argentina y EE. UU.</li>
+      </ul>
+    </div>
+    <div class="card reveal d2">
+      <div class="clbl">Límites que hay que decir en claro</div>
+      <ul class="ul">
+        <li><b>Ventas unitarias reales:</b> no son públicas. O se licencia un panel de ventas o trabajamos con posiciones, nunca con unidades.</li>
+        <li><b>Un ranking no es una venta.</b> El puesto en Amazon indica orden relativo, no ejemplares vendidos.</li>
+        <li><b>Titularidad de derechos:</b> ninguna base pública la acredita. Se corrobora con agente, editorial o registro.</li>
+        <li><b>Menciones en redes:</b> sin herramienta licenciada son aproximaciones, no censos.</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<!-- ══ 03 VIDEOJUEGOS ══════════════════════════════════════ -->
+<section id="videojuegos">
+  <div class="sey">03 · Videojuegos</div>
+  <h2 class="stitle">Videojuegos · mapeo en desarrollo</h2>
+  <p class="slead">Fase 1 abierta. Estas cifras son la foto de hoy y pueden crecer: el rastreo de fuentes sigue en marcha. Cada data point trae ya una lectura previa de accesibilidad y una prioridad de 1 a 5, pero eso no es la validación de fase 2.</p>
+
+  <div class="mband reveal">
+    <div class="mi"><div class="mnum">91</div><div class="mlbl">Data points hasta ahora</div></div>
+    <div class="mi"><div class="mnum">45</div><div class="mlbl">Fuentes hasta ahora</div></div>
+    <div class="mi"><div class="mnum">22</div><div class="mlbl">Categorías</div></div>
+    <div class="mi"><div class="mnum">0</div><div class="mlbl">Data points validados</div></div>
+  </div>
+
+  <div class="g12">
+    <div class="bkcol reveal d1">
+      <div class="bk k-acc"><div class="bk-n">75</div><div><div class="bk-t">Marcados como accesibles</div><div class="bk-b">Dato público o API abierta según la lectura de fase 1. Falta comprobar uno por uno si ya lo recogemos o si hay que construir la integración.</div></div></div>
+      <div class="bk k-perm"><div class="bk-n">13</div><div><div class="bk-t">Marcados como parciales</div><div class="bk-b">Solo se obtiene una parte, o hay que combinar varias fuentes para reconstruirlo. Son los primeros a revisar en fase 2.</div></div></div>
+      <div class="bk k-pago"><div class="bk-n">3</div><div><div class="bk-t">Con suscripción de por medio</div><div class="bk-b">VG Insights, Gamalytic y PlayTracker: versión gratuita limitada, desglose completo de pago.</div></div></div>
+    </div>
+    <div class="card reveal d2">
+      <div class="clbl">Data points por categoría</div>
+      <div class="cwrap" style="height:470px"><canvas id="barsV"></canvas></div>
+    </div>
+  </div>
+
+  <div class="g3" style="margin-top:24px">
+    <div class="card reveal d1">
+      <div class="clbl">Concentración en Steam</div>
+      <p style="font-size:13.5px;line-height:1.7;color:var(--txt2)"><b style="color:var(--txt)">44 de los 91 data points</b> se apoyan en Steam o SteamDB. Es la principal concentración del mapa tal y como está hoy.</p>
+    </div>
+    <div class="card reveal d2">
+      <div class="clbl">Cobertura de consolas</div>
+      <p style="font-size:13.5px;line-height:1.7;color:var(--txt2)">De momento <b style="color:var(--txt)">6 data points</b> mencionan PlayStation o Xbox, y llegan vía estimaciones de terceros.</p>
+    </div>
+    <div class="card reveal d3">
+      <div class="clbl">Prioridad asignada</div>
+      <p style="font-size:13.5px;line-height:1.7;color:var(--txt2)"><b style="color:var(--txt)">68 de 91</b> tienen prioridad 4 o 5: 34 con prioridad 5 y 34 con prioridad 4.</p>
+    </div>
+  </div>
+
+  <div class="card reveal" style="margin-top:24px">
+    <div class="clbl">Fuentes principales identificadas hasta ahora</div>
+    <table class="etbl">
+      <thead><tr><th>Fuente</th><th>Data points</th><th>Qué aporta</th><th>Accesibilidad declarada</th></tr></thead>
+      <tbody>
+        <tr><td>Steam</td><td>22</td><td>Metadatos, reseñas, jugadores, precio, idiomas, actualizaciones</td><td>Público</td></tr>
+        <tr><td>SteamDB (y variantes)</td><td>12</td><td>Histórico de jugadores, precios, parches y noticias</td><td>Público</td></tr>
+        <tr><td>Metacritic</td><td>4</td><td>Nota de prensa y de usuarios</td><td>Público</td></tr>
+        <tr><td>HowLongToBeat</td><td>4</td><td>Duración de la experiencia y rejugabilidad</td><td>Público</td></tr>
+        <tr><td>VG Insights · Gamalytic · PlayTracker</td><td>6</td><td>Copias vendidas, ingresos y propietarios estimados</td><td><span class="tag t-pago">Gratis limitado / suscripción</span></td></tr>
+        <tr><td>OpenCritic</td><td>2</td><td>Agregado de crítica alternativo a Metacritic</td><td>Público</td></tr>
+        <tr><td>Twitch Tracker · SullyGnome</td><td>2</td><td>Horas vistas y presencia en streaming</td><td>Público</td></tr>
+        <tr><td>The Game Awards · BAFTA · D.I.C.E. · Golden Joystick</td><td>8</td><td>Nominaciones y premios</td><td>Público</td></tr>
+        <tr><td>IGDB · MobyGames</td><td>2</td><td>Ficha, plataformas e historial de la IP</td><td>Público</td></tr>
+        <tr><td>Google Trends · Reddit</td><td>4</td><td>Interés de búsqueda y tamaño de comunidad</td><td><span class="tag t-perm">API con registro</span></td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<!-- ══ 04 CIERRE ═══════════════════════════════════════════ -->
+<section id="cierre">
+  <div class="sey">04 · Cierre</div>
+  <h2 class="stitle">Qué falta para cerrar fuentes y data points</h2>
+  <p class="slead">Hasta que estos cuatro frentes estén resueltos la lista definitiva sigue abierta, y sin lista definitiva no se puede empezar el sistema de valoración.</p>
+
+  <div class="stepcol" style="margin-bottom:30px">
+    <div class="step now reveal d1"><div class="step-n">A</div><div><div class="step-t">Decisión sobre las fuentes de pago de Libros</div><div class="step-b">43 data points dependen de suscripción, concentrados en ventas reales y escucha social. Sin esta decisión no sabemos si el campo cubre ventas o solo señales de posición.</div></div></div>
+    <div class="step now reveal d2"><div class="step-n">B</div><div><div class="step-t">Solicitudes de acceso pendientes</div><div class="step-b">14 data points de Libros esperan aprobación de APIs restringidas. No cuestan dinero, sí plazo, y la aprobación no está garantizada. Ninguna solicitud presentada.</div></div></div>
+    <div class="step now reveal d3"><div class="step-n">C</div><div><div class="step-t">Depuración de los no viables de Libros</div><div class="step-b">14 data points que la fuente no mide realmente, que son documentación o que pertenecen a servicios obsoletos. Hay que retirarlos o sustituirlos para no prometer lo que no existe.</div></div></div>
+    <div class="step now reveal d4"><div class="step-n">D</div><div><div class="step-t">Cierre del mapeo de Videojuegos</div><div class="step-b">Terminar el rastreo de fuentes y dar por cerrado el listado. Hasta entonces las 91 filas actuales son una foto provisional, no la lista sobre la que validar.</div></div></div>
+  </div>
+
+  <div class="card reveal">
+    <div class="clbl">Libros · fuentes de pago sobre la mesa</div>
+    <table class="etbl">
+      <thead><tr><th>Fuente</th><th>Qué aporta</th><th>Hueco que cubre</th><th>Tipo</th></tr></thead>
+      <tbody>
+        <tr><td>NielsenIQ BookData / BookScan</td><td>Ventas en punto de venta, precio y calendario editorial</td><td>Ventas reales, el hueco principal</td><td><span class="tag t-pago">Suscripción</span></td></tr>
+        <tr><td>Bookstat</td><td>Métricas propietarias de venta online y preventas</td><td>Ventas en canal digital</td><td><span class="tag t-pago">Suscripción</span></td></tr>
+        <tr><td>BookNet Canada SalesData</td><td>Ventas y stock del mercado canadiense</td><td>Cobertura Norteamérica</td><td><span class="tag t-pago">Suscripción</span></td></tr>
+        <tr><td>Ingram iQ / Analytics</td><td>Ventas y distribución del catálogo Ingram</td><td>Distribución internacional</td><td><span class="tag t-pago">Suscripción</span></td></tr>
+        <tr><td>K-lytics</td><td>Estimaciones de venta y tamaño de categoría en Kindle</td><td>Contexto competitivo por género</td><td><span class="tag t-pago">Suscripción</span></td></tr>
+        <tr><td>WorldCat / OCLC</td><td>Presencia en bibliotecas, formatos y territorios</td><td>Alcance institucional</td><td><span class="tag t-pago">Licencia</span></td></tr>
+        <tr><td>Brandwatch · Talkwalker</td><td>Escucha social y de medios con cobertura contractual</td><td>Menciones fiables en redes</td><td><span class="tag t-pago">Suscripción</span></td></tr>
+        <tr><td>Socialinsider · SocialPilot · Metricool</td><td>Rendimiento y benchmarking de perfiles sociales</td><td>Actividad del autor y de la obra</td><td><span class="tag t-pago">Suscripción</span></td></tr>
+        <tr><td>Jellybooks Radar · Ingram Reader Insight</td><td>Comportamiento de lectura y perfil de audiencia</td><td>Perfil del lector, hoy sin cobertura</td><td><span class="tag t-pago">Servicio</span></td></tr>
+        <tr><td>MetaComet Rights</td><td>Gestión de derechos y licencias</td><td>Herramienta interna, no fuente pública</td><td><span class="tag t-pago">Licencia</span></td></tr>
+        <tr><td>The Sunday Times</td><td>Lista de bestsellers de Reino Unido</td><td>Cobertura UK</td><td><span class="tag t-pago">Suscripción</span></td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="g2" style="margin-top:24px">
+    <div class="card reveal d1">
+      <div class="clbl">Accesos a solicitar · sin coste, con plazo</div>
+      <p style="font-size:13.5px;line-height:1.7;color:var(--txt2);margin-bottom:14px">Afectan a Libros y reaparecen en Videojuegos, así que conviene tramitarlos una sola vez para los dos campos.</p>
+      <div style="display:flex;flex-wrap:wrap;gap:8px">
+        <span class="tag t-perm">Amazon Creators API</span>
+        <span class="tag t-perm">TikTok Research API</span>
+        <span class="tag t-perm">Instagram Graph API</span>
+        <span class="tag t-perm">Reddit API</span>
+        <span class="tag t-perm">Google Trends API</span>
+        <span class="tag t-perm">EUIPO · TMview</span>
+        <span class="tag t-perm">TMDB</span>
+        <span class="tag t-perm">WIPO Global Brand</span>
+      </div>
+    </div>
+    <div class="ins reveal d2">
+      <div class="ey">Qué se puede prometer hoy</div>
+      <p>Con ambos campos en fase de mapeo y validación, lo que existe es <b>un inventario de qué se puede saber de una IP y de dónde sale</b>. Eso ya es material de conversación con cliente.</p>
+      <p>El sistema de puntuación no está diseñado y no se va a diseñar antes de cerrar las fuentes: hacerlo sobre una lista que aún cambia obligaría a rehacerlo.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ══ 05 SIGUIENTE ════════════════════════════════════════ -->
+<section id="siguiente">
+  <div class="sey">05 · Plan</div>
+  <h2 class="stitle">Próximos pasos</h2>
+  <p class="slead">Secuencia de trabajo acordada.</p>
+  <div class="stepcol">
+    <div class="step now reveal d1"><div class="step-n">1</div><div><div class="step-t">Definir fuentes de ventas por suscripción de Libros</div><div class="step-b">43 data points dependen de suscripción y el grueso son datos de venta real. Es la decisión que marca si el campo cubre ventas o solo señales de posición.</div></div></div>
+    <div class="step now reveal d2"><div class="step-n">2</div><div><div class="step-t">Activar fuentes faltantes de Libros</div><div class="step-b">Integrar las 64 accesibles sin coste y tramitar los 14 accesos que requieren aprobación.</div></div></div>
+    <div class="step reveal d3"><div class="step-n">3</div><div><div class="step-t">Cerrar la fase 1 de Videojuegos</div><div class="step-b">Terminar el rastreo de fuentes y dar el listado por cerrado.</div></div></div>
+    <div class="step reveal d4"><div class="step-n">4</div><div><div class="step-t">Comenzar el desarrollo del sistema de valoración</div><div class="step-b">Definir parámetros, pesos y escala de salida sobre las listas ya cerradas.</div></div></div>
+  </div>
+</section>
+
+<!-- ══ 06 GLOSARIO ═════════════════════════════════════════ -->
+<section id="glosario">
+  <div class="sey">06 · Cómo leer los datos</div>
+  <h2 class="stitle">Cuatro etiquetas que evitan malentendidos</h2>
+  <p class="slead">Son las etiquetas que usamos al validar cada data point. Importan porque determinan qué se puede afirmar delante de un cliente y qué no.</p>
+  <div class="g2">
+    <div class="card reveal d1">
+      <dl>
+        <div class="gl"><dt>Directo</dt><dd>La fuente publica exactamente ese dato. Se puede citar tal cual, indicando fuente y fecha.</dd></div>
+        <div class="gl"><dt>Señal ordinal</dt><dd>Indica una posición relativa, no una cantidad. Un puesto en una lista de más vendidos ordena, pero no dice cuántas unidades se han vendido.</dd></div>
+      </dl>
+    </div>
+    <div class="card reveal d2">
+      <dl>
+        <div class="gl"><dt>Proxy o derivado</dt><dd>No lo publica nadie: lo calculamos nosotros a partir de otros datos. Hay que guardar la fórmula y presentarlo como aproximación.</dd></div>
+        <div class="gl"><dt>Estimado</dt><dd>Sale de un modelo con supuestos, propio o de un tercero. Se presenta siempre como estimación, nunca como cifra observada.</dd></div>
+      </dl>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div><strong>Geca</strong> · Valoración de IP · Panel de progreso interno</div>
+  <div>Libros: cotejo 7 ago 2026 · Videojuegos: mapeo en desarrollo · Panel actualizado 10 ago 2026</div>
+</footer>
+
+</main>
+
+<script>
+/* ═══════════════════════════════════════════════════════════
+   ACTUALIZAR EL PANEL — se edita solo esta lista.
+   Valores en f1 / f2 / f3:  'done' | 'curso' | 'pend'
+   ═══════════════════════════════════════════════════════════ */
+const CAMPOS = [
+  {pri:'01', nombre:'Libros',       nota:'192 data points · 82 fuentes · 17 categorías', f1:'done', f2:'curso', f3:'pend'},
+  {pri:'02', nombre:'Videojuegos',  nota:'91 data points · 45 fuentes · 22 categorías (provisional)', f1:'curso', f2:'pend', f3:'pend'},
+  {pri:'03', nombre:'Deportes',     nota:'',                                             f1:'pend', f2:'pend',  f3:'pend'},
+  {pri:'04', nombre:'Shorts',       nota:'',                                             f1:'pend', f2:'pend',  f3:'pend'},
+  {pri:'05', nombre:'Experiencias', nota:'',                                             f1:'pend', f2:'pend',  f3:'pend'},
+  {pri:'06', nombre:'Eventos',      nota:'',                                             f1:'pend', f2:'pend',  f3:'pend'},
+  {pri:'07', nombre:'RRSS',         nota:'',                                             f1:'pend', f2:'pend',  f3:'pend'},
+  {pri:'08', nombre:'Teatro',       nota:'',                                             f1:'pend', f2:'pend',  f3:'pend'},
+  {pri:'09', nombre:'Podcast',      nota:'',                                             f1:'pend', f2:'pend',  f3:'pend'},
+  {pri:'10', nombre:'Talento',      nota:'',                                             f1:'pend', f2:'pend',  f3:'pend'},
+  {pri:'11', nombre:'Noticias',     nota:'',                                             f1:'pend', f2:'pend',  f3:'pend'},
+  {pri:'—',  nombre:'Marcas',       nota:'On demand · fuera de la secuencia',            f1:'pend', f2:'pend',  f3:'pend'}
+];
+
+const LBL={done:'Completada',curso:'En curso',pend:'Pendiente'};
+document.getElementById('campos').innerHTML = CAMPOS.map(c=>{
+  const fases=[c.f1,c.f2,c.f3], hechas=fases.filter(f=>f==='done').length;
+  const pct=Math.round(hechas/3*100);
+  const sub = hechas===3 ? 'completado' : fases.includes('curso') ? `fase ${hechas+1} en curso` : hechas===0 ? 'sin iniciar' : `${hechas} de 3 fases`;
+  const chip=f=>`<div><span class="chip c-${f}"><i></i>${LBL[f]}</span></div>`;
+  return `<div class="crow reveal${fases.includes('curso')?' next':''}">
+    <div class="cprio">${c.pri}</div>
+    <div class="cname">${c.nombre}${c.nota?`<small>${c.nota}</small>`:''}</div>
+    ${chip(c.f1)}${chip(c.f2)}${chip(c.f3)}
+    <div><div class="cbar"><span style="width:${pct}%"></span></div><div class="cpct">${pct}% · ${sub}</div></div>
+  </div>`;
+}).join('');
+
+const C_OP='#15652F', C_ACC='#2A8FA0', C_PERM='#D98324', C_PAGO='#5B3E7A', C_NO='#8A2B20';
+const F={family:'Sora',size:11,weight:'600'};
+
+/* Libros · doughnut de viabilidad */
+new Chart(document.getElementById('dn'),{
+  type:'doughnut',
+  data:{labels:['Ya recopilando','Accesible, falta integrar','Requiere permiso','Requiere inversión','No viable'],
+    datasets:[{data:[57,64,14,43,14],backgroundColor:[C_OP,C_ACC,C_PERM,C_PAGO,C_NO],borderColor:'#fff',borderWidth:3}]},
+  options:{responsive:true,maintainAspectRatio:false,cutout:'56%',
+    plugins:{legend:{position:'bottom',labels:{boxWidth:10,boxHeight:10,usePointStyle:true,pointStyle:'circle',padding:12,color:'#4A4A4A',font:F}},
+      tooltip:{callbacks:{label:c=>' '+c.parsed+' data points ('+Math.round(c.parsed/192*100)+'%)'}}}}
+});
+
+/* Libros · categorías x estado */
+new Chart(document.getElementById('barsL'),{
+  type:'bar',
+  data:{labels:['Información del libro','Ventas','Derechos','Visibilidad / distribución','Métricas en RRSS','Información de lectores','Redes sociales','Retail','Presencia cultural','Curación editorial','Demanda y visibilidad','Otras categorías'],
+    datasets:[
+      {label:'Ya recopilando',     data:[44,0,0,6,0,3,0,0,1,0,0,3],backgroundColor:C_OP},
+      {label:'Accesible',          data:[22,14,4,0,0,7,2,4,3,3,3,2],backgroundColor:C_ACC},
+      {label:'Requiere permiso',   data:[4,0,3,0,0,0,3,2,0,0,0,2],backgroundColor:C_PERM},
+      {label:'Requiere inversión', data:[0,23,1,7,9,0,1,0,0,0,0,2],backgroundColor:C_PAGO},
+      {label:'No viable',          data:[0,5,6,1,2,0,0,0,0,0,0,0],backgroundColor:C_NO}]},
+  options:{indexAxis:'y',responsive:true,maintainAspectRatio:false,
+    plugins:{legend:{position:'top',align:'start',labels:{boxWidth:10,boxHeight:10,usePointStyle:true,pointStyle:'circle',padding:14,color:'#4A4A4A',font:F}},
+      tooltip:{callbacks:{label:c=>' '+c.dataset.label+': '+c.parsed.x+' data points'}}},
+    scales:{x:{stacked:true,ticks:{color:'#666',font:F},grid:{color:'rgba(0,0,0,.05)'}},
+      y:{stacked:true,afterFit:s=>{s.width=192},ticks:{color:'#111',font:{family:'Sora',size:11.5,weight:'700'}},grid:{display:false}}}}
+});
+
+/* Videojuegos · categorías x accesibilidad declarada */
+new Chart(document.getElementById('barsV'),{
+  type:'bar',
+  data:{labels:['Premios','Ventas','Popularidad','Producto','Marketing','Monetización','Comunidad','Audiencia','Tiempo','Recepción crítica','Operación','Retención proxy','Localización','Competencia','Señales cualitativas','Distribución','Visibilidad','Precio','Streaming','Reviews','Metadatos','Tracción'],
+    datasets:[
+      {label:'Accesible',   data:[9,1,7,7,3,5,2,4,4,3,4,3,3,4,4,3,2,2,2,2,1,0],backgroundColor:C_ACC},
+      {label:'Parcial',     data:[0,3,0,0,2,0,3,0,0,1,0,1,1,0,0,0,1,0,0,0,0,1],backgroundColor:C_PERM},
+      {label:'Suscripción', data:[0,3,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],backgroundColor:C_PAGO}]},
+  options:{indexAxis:'y',responsive:true,maintainAspectRatio:false,
+    plugins:{legend:{position:'top',align:'start',labels:{boxWidth:10,boxHeight:10,usePointStyle:true,pointStyle:'circle',padding:14,color:'#4A4A4A',font:F}},
+      tooltip:{callbacks:{label:c=>' '+c.dataset.label+': '+c.parsed.x+' data points'}}},
+    scales:{x:{stacked:true,ticks:{color:'#666',font:F,stepSize:2},grid:{color:'rgba(0,0,0,.05)'}},
+      y:{stacked:true,afterFit:s=>{s.width=158},ticks:{color:'#111',font:{family:'Sora',size:11,weight:'700'}},grid:{display:false}}}}
+});
+
+const ro=new IntersectionObserver(es=>{es.forEach(e=>{if(e.isIntersecting){e.target.classList.add('vis');ro.unobserve(e.target)}})},{threshold:.06});
+document.querySelectorAll('.reveal').forEach(el=>ro.observe(el));
+const no=new IntersectionObserver(es=>{es.forEach(e=>{if(e.isIntersecting){
+  document.querySelectorAll('nav a').forEach(a=>a.classList.remove('active'));
+  const a=document.querySelector(`nav a[href="#${e.target.id}"]`); if(a)a.classList.add('active');}})},{rootMargin:'-20% 0px -70% 0px'});
+document.querySelectorAll('section[id]').forEach(s=>no.observe(s));
+</script>
+</body>
+</html>
